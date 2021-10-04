@@ -9,6 +9,8 @@ from .base_model import BaseModel
 from . import networks
 from .fs_networks import Generator_Adain_Upsample, Discriminator
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 class SpecificNorm(nn.Module):
     def __init__(self, epsilon=1e-8):
         """
@@ -17,11 +19,11 @@ class SpecificNorm(nn.Module):
         """
         super(SpecificNorm, self).__init__()
         self.mean = np.array([0.485, 0.456, 0.406])
-        self.mean = torch.from_numpy(self.mean).float().cuda()
+        self.mean = torch.from_numpy(self.mean).float().to(device)
         self.mean = self.mean.view([1, 3, 1, 1])
 
         self.std = np.array([0.229, 0.224, 0.225])
-        self.std = torch.from_numpy(self.std).float().cuda()
+        self.std = torch.from_numpy(self.std).float().to(device)
         self.std = self.std.view([1, 3, 1, 1])
 
     def forward(self, x):
@@ -50,7 +52,7 @@ class fsModel(BaseModel):
             torch.backends.cudnn.benchmark = True
         self.isTrain = opt.isTrain
 
-        device = torch.device("cuda:0")
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # Generator network
         self.netG = Generator_Adain_Upsample(input_nc=3, output_nc=3, latent_size=512, n_blocks=9, deep=False)
@@ -61,7 +63,7 @@ class fsModel(BaseModel):
 
         # Id network
         netArc_checkpoint = opt.Arc_path
-        netArc_checkpoint = torch.load(netArc_checkpoint)
+        netArc_checkpoint = torch.load(netArc_checkpoint, map_location=device)
         self.netArc = netArc_checkpoint['model'].module
         self.netArc = self.netArc.to(device)
         self.netArc.eval()
@@ -120,7 +122,7 @@ class fsModel(BaseModel):
     def _gradinet_penalty_D(self, netD, img_att, img_fake):
         # interpolate sample
         bs = img_fake.shape[0]
-        alpha = torch.rand(bs, 1, 1, 1).expand_as(img_fake).cuda()
+        alpha = torch.rand(bs, 1, 1, 1).expand_as(img_fake).to(device)
         interpolated = Variable(alpha * img_att + (1 - alpha) * img_fake, requires_grad=True)
         pred_interpolated = netD.forward(interpolated)
         pred_interpolated = pred_interpolated[-1]
@@ -128,7 +130,7 @@ class fsModel(BaseModel):
         # compute gradients
         grad = torch.autograd.grad(outputs=pred_interpolated,
                                    inputs=interpolated,
-                                   grad_outputs=torch.ones(pred_interpolated.size()).cuda(),
+                                   grad_outputs=torch.ones(pred_interpolated.size()).to(device),
                                    retain_graph=True,
                                    create_graph=True,
                                    only_inputs=True)[0]
@@ -238,5 +240,3 @@ class fsModel(BaseModel):
         if self.opt.verbose:
             print('update learning rate: %f -> %f' % (self.old_lr, lr))
         self.old_lr = lr
-
-
