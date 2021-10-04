@@ -90,7 +90,7 @@ if __name__ == '__main__':
             net =None
 
         reverse2wholeimage(b_align_crop_tenor_list, swap_result_list, b_mat_list, crop_size, img_b_whole, logoclass, \
-            os.path.join(opt.output_path, 'output.jpg'), opt.no_simswaplogo,pasring_model =net,use_mask=opt.use_mask, norm = spNorm)
+            os.path.join(opt.output_path), opt.no_simswaplogo,pasring_model =net,use_mask=opt.use_mask, norm = spNorm)
 
         print(' ')
 
