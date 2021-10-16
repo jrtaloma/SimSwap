@@ -11,6 +11,8 @@ from insightface_func.face_detect_crop_single import Face_detect_crop
 from util.videoswap import video_swap
 import os
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def lcm(a, b): return abs(a * b) / fractions.gcd(a, b) if a and b else 0
 
 transformer = transforms.Compose([
@@ -59,8 +61,8 @@ if __name__ == '__main__':
         # img_att = img_b.view(-1, img_b.shape[0], img_b.shape[1], img_b.shape[2])
 
         # convert numpy to tensor
-        img_id = img_id.cuda()
-        # img_att = img_att.cuda()
+        img_id = img_id.to(device)
+        # img_att = img_att.to(device)
 
         #create latent id
         img_id_downsample = F.interpolate(img_id, scale_factor=0.5)
@@ -69,3 +71,4 @@ if __name__ == '__main__':
 
         video_swap(opt.video_path, latend_id, model, app, opt.output_path,temp_results_dir=opt.temp_path,\
             no_simswaplogo=opt.no_simswaplogo,use_mask=opt.use_mask)
+
